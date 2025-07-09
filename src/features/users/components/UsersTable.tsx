@@ -17,22 +17,25 @@ import {
 	TableRow,
 	TableHead,
 	TableCell
-} from '@/components/ui/table'
+} from '@/shared/components/ui/table'
 
 import {
 	Card,
 	CardHeader,
 	CardTitle,
 	CardContent
-} from '@/components/ui/card'
+} from '@/shared/components/ui/card'
 
 import { useState } from 'react'
-
+import { DefaultModal } from '../../../shared/components/DefaultModal'
+import AddUserForm from './forms/AddUserForm'
+import EditUserForm from './forms/EditUserForm'
 type User = {
-	id: number
-	name: string
-	username: string
-	email: string
+	id: number;
+	name: string;
+	email: string;
+	username: string;
+	role: string;
 }
 
 interface Props {
@@ -41,15 +44,25 @@ interface Props {
 
 const UsersTable = ({ data }: Props) => {
 	const [sorting, setSorting] = useState<SortingState>([])
+	const [editingUser, setEditingUser] = useState<User | null>(null)
+
+	// handler
+	const handleEditClick = (user: User) => {
+		setEditingUser(user)
+	}
+
+	const handleCloseModal = () => {
+		setEditingUser(null)
+	}
 
 	// Column definition
 	const columns: ColumnDef<User>[] = [
 		{
-			header: 'Name',
+			header: 'Username',
 			accessorKey: 'username'
 		},
 		{
-			header: 'Username',
+			header: 'Name',
 			accessorKey: 'name'
 		},
 		{
@@ -57,14 +70,18 @@ const UsersTable = ({ data }: Props) => {
 			accessorKey: 'email'
 		},
 		{
+			header: 'Role',
+			accessorKey: 'role'
+		},
+		{
 			id: 'actions',
 			header: '',
 			cell: ({ row }) => (
 				<button
 					className='text-blue-600 underline'
-					onClick={() => alert(`ID: ${row.original.id}`)}
+					onClick={() => handleEditClick(row.original)}
 				>
-					View
+					Edit
 				</button>
 			),
 		},
@@ -82,8 +99,30 @@ const UsersTable = ({ data }: Props) => {
 
 	return (
 		<Card>
-			<CardHeader>
+			<CardHeader className='flex justify-between items-center'>
 				<CardTitle>Users</CardTitle>
+				<DefaultModal
+					title='Add User'
+					trigger={<button className='px-4 py-2 bg-blue-300 rounded-md text-white'>+ add User</button>}
+				>
+					<AddUserForm />
+				</DefaultModal>
+
+				<DefaultModal
+					title='Edit User'
+					open={!!editingUser}
+					onOpenChange={(open) => {
+						if (!open) setEditingUser(null)
+					}}
+				>
+					<EditUserForm
+						user={editingUser}
+						onSuccess={() => {
+							console.log("updated")
+							handleCloseModal()
+						}}
+					/>
+				</DefaultModal>
 			</CardHeader>
 			<CardContent>
 

@@ -1,6 +1,6 @@
 import { createRoute } from "@tanstack/react-router";
 import type { RootRoute } from "@tanstack/react-router";
-import UserPage from "@/pages/UsersPage";
+import UserPage from "@/features/users/UsersPage";
 
 
 export default (parentRoute: RootRoute) => 
