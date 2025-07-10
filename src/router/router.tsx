@@ -1,10 +1,8 @@
-import ReactDOM from 'react-dom/client'
 import {
-  Outlet,
-  RouterProvider,
-  createRootRoute,
-  createRoute,
-  createRouter,
+	Outlet,
+	createRootRoute,
+	createRoute,
+	createRouter,
 } from '@tanstack/react-router'
 import { TanStackRouterDevtools } from '@tanstack/react-router-devtools'
 
@@ -21,41 +19,41 @@ import App from '@/app/App.tsx'
 
 
 const rootRoute = createRootRoute({
-  component: () => (
-    <>
-      <Header />
-      <Outlet />
-      <TanStackRouterDevtools />
+	component: () => (
+		<>
+			<Header />
+			<Outlet />
+			<TanStackRouterDevtools />
 
-      <TanStackQueryLayout />
-    </>
-  ),
+			<TanStackQueryLayout />
+		</>
+	),
 })
 
 const indexRoute = createRoute({
-  getParentRoute: () => rootRoute,
-  path: '/',
-  component: App,
+	getParentRoute: () => rootRoute,
+	path: '/',
+	component: App,
 })
 
 const routeTree = rootRoute.addChildren([
-  indexRoute,
-  UsersRoute(rootRoute)
+	indexRoute,
+	UsersRoute(rootRoute)
 ])
 
 export const router = createRouter({
-  routeTree,
-  context: {
-    ...TanStackQueryProvider.getContext(),
-  },
-  defaultPreload: 'intent',
-  scrollRestoration: true,
-  defaultStructuralSharing: true,
-  defaultPreloadStaleTime: 0,
+	routeTree,
+	context: {
+		...TanStackQueryProvider.getContext(),
+	},
+	defaultPreload: 'intent',
+	scrollRestoration: true,
+	defaultStructuralSharing: true,
+	defaultPreloadStaleTime: 0,
 })
 
 declare module '@tanstack/react-router' {
-  interface Register {
-    router: typeof router
-  }
+	interface Register {
+		router: typeof router
+	}
 }

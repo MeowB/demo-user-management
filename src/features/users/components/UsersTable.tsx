@@ -26,25 +26,34 @@ import {
 	CardContent
 } from '@/shared/components/ui/card'
 
-import { useState } from 'react'
-import { DefaultModal } from '../../../shared/components/DefaultModal'
+import { Button } from '@/shared/components/ui/button'
+import { ConfirmDeleteModal } from '@/shared/components/modals/ConfirmDeleteModal'
+import { DefaultModal } from '@/shared/components/modals/DefaultModal'
 import AddUserForm from './forms/AddUserForm'
 import EditUserForm from './forms/EditUserForm'
-type User = {
-	id: number;
-	name: string;
-	email: string;
-	username: string;
-	role: string;
-}
+
+import z from 'zod'
+
+import { useState } from 'react'
+import { useDeleteUser } from '../hooks/useDeleteUser'
+
+import type { User } from '../userSchemas'
+import { UsersSchema } from '../userSchemas'
+
+
+type Users = z.infer<typeof UsersSchema>
 
 interface Props {
-	data: User[]
+	data: Users
 }
 
 const UsersTable = ({ data }: Props) => {
 	const [sorting, setSorting] = useState<SortingState>([])
 	const [editingUser, setEditingUser] = useState<User | null>(null)
+	const [userToDelete, setUserToDelete] = useState<User | null>(null)
+	const { mutate: deleteUserById } = useDeleteUser(() => {
+		setUserToDelete(null)
+	})
 
 	// handler
 	const handleEditClick = (user: User) => {
@@ -53,6 +62,11 @@ const UsersTable = ({ data }: Props) => {
 
 	const handleCloseModal = () => {
 		setEditingUser(null)
+	}
+
+	const handleDeleteUserClick = (user: User) => {
+		deleteUserById(user.id)
+		setUserToDelete(null)
 	}
 
 	// Column definition
@@ -77,12 +91,24 @@ const UsersTable = ({ data }: Props) => {
 			id: 'actions',
 			header: '',
 			cell: ({ row }) => (
-				<button
-					className='text-blue-600 underline'
-					onClick={() => handleEditClick(row.original)}
-				>
-					Edit
-				</button>
+				<>
+					<Button
+						className='cursor-pointer bg-blue-300 hover:bg-blue-400 text-white mr-3'
+						onClick={() => handleEditClick(row.original)}
+						variant={'secondary'}
+						size={'sm'}
+					>
+						Edit
+					</Button>
+					<Button
+						onClick={() => setUserToDelete(row.original)}
+						className='cursor-pointer'
+						variant={'destructive'}
+						size={'sm'}
+					>
+						Delete
+					</Button>
+				</>
 			),
 		},
 	]
@@ -99,31 +125,52 @@ const UsersTable = ({ data }: Props) => {
 
 	return (
 		<Card>
+			{/* EDIT MODAL */}
+			<DefaultModal
+				title='Edit User'
+				open={!!editingUser}
+				onOpenChange={(open) => {
+					if (!open) setEditingUser(null)
+				}}
+			>
+				<EditUserForm
+					user={editingUser}
+					onSuccess={() => {
+						console.log("updated")
+						handleCloseModal()
+					}}
+				/>
+			</DefaultModal>
+
+			{/* DELETE MODAL */}
+			<ConfirmDeleteModal
+				open={!!userToDelete}
+				onOpenChange={() => setUserToDelete(null)}
+				onConfirm={() => {
+					handleDeleteUserClick(userToDelete!)
+				}}
+				itemName={userToDelete?.name}
+			/>
+
+
 			<CardHeader className='flex justify-between items-center'>
 				<CardTitle>Users</CardTitle>
 				<DefaultModal
 					title='Add User'
-					trigger={<button className='px-4 py-2 bg-blue-300 rounded-md text-white'>+ add User</button>}
+					trigger={
+						<Button
+							variant={'secondary'}
+							className='cursor-pointer px-4 py-2 bg-blue-300 hover:bg-blue-400 rounded-md text-white'
+						>
+							+ add User
+						</Button>
+					}
 				>
 					<AddUserForm />
 				</DefaultModal>
-
-				<DefaultModal
-					title='Edit User'
-					open={!!editingUser}
-					onOpenChange={(open) => {
-						if (!open) setEditingUser(null)
-					}}
-				>
-					<EditUserForm
-						user={editingUser}
-						onSuccess={() => {
-							console.log("updated")
-							handleCloseModal()
-						}}
-					/>
-				</DefaultModal>
 			</CardHeader>
+
+
 			<CardContent>
 
 				<Table>

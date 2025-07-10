@@ -8,17 +8,19 @@ import * as TanStackQueryProvider from '../integrations/tanstack-query/root-prov
 import './styles.css'
 import reportWebVitals from '../reportWebVitals.ts'
 
+import { Toaster } from 'sonner'
 
 const rootElement = document.getElementById('app')
 if (rootElement && !rootElement.innerHTML) {
-  const root = ReactDOM.createRoot(rootElement)
-  root.render(
-    <StrictMode>
-      <TanStackQueryProvider.Provider>
-        <RouterProvider router={router} />
-      </TanStackQueryProvider.Provider>
-    </StrictMode>,
-  )
+	const root = ReactDOM.createRoot(rootElement)
+	root.render(
+		<StrictMode>
+			<Toaster position='top-right' richColors />
+			<TanStackQueryProvider.Provider>
+				<RouterProvider router={router} />
+			</TanStackQueryProvider.Provider>
+		</StrictMode>,
+	)
 }
 
 // If you want to start measuring performance in your app, pass a function

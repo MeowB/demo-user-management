@@ -1,10 +1,4 @@
-type User = {
-	id: number;
-	name: string;
-	email: string;
-	username: string;
-	role: string;
-}
+import type { User } from "../../userSchemas";
 
 type NewUser = {
 	id: number;

@@ -10,7 +10,6 @@
     "cssVariables": true,
     "prefix": ""
   },
-  "path": "./src/shared/components",
   "aliases": {
     "components": "@/shared/components",
     "utils": "@/shared/lib/utils",
