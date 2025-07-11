@@ -1,6 +1,6 @@
 import { upfetch } from "@/shared/lib/upfetch";
-import { UserSchema, UsersSchema } from "@/features/users/userSchemas";
-import type { User } from "@/features/users/userSchemas";
+import { EditUserFormSchema, UserSchema, UsersSchema } from "@/features/users/userSchemas";
+import type { EditUserFormType, NewUserFormType } from "@/features/users/userSchemas";
 
 /* use custom upfetch wrapper to auto-handle settings and infer type with zod schema */
 
@@ -17,12 +17,24 @@ const deleteUser = (id: number) => {
 	})
 }
 
-const createUser = (data: Omit<User, 'id'>) => {
+const createUser = (user: NewUserFormType) => {
 	return upfetch('/users', {
 		method: 'POST',
-		body: data,
+		body: JSON.stringify({
+			...user,
+			id: Date.now(),
+			createdAt: new Date().toISOString()
+		}),
 		schema: UserSchema
 	})
 }
 
-export default { getUsers, createUser, deleteUser }
+const updateUser = (user: EditUserFormType) => {
+	return upfetch(`/users/${user.id}`, {
+		method: 'PATCH',
+		body: user,
+		schema: EditUserFormSchema
+	})
+}
+
+export default { getUsers, createUser, deleteUser, updateUser }

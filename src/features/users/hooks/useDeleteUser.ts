@@ -12,7 +12,8 @@ export const useDeleteUser = (onSuccess?: () => void) => {
 			toast.success('User deleted successfully');
 			onSuccess?.()
 		},
-		onError: () => {
+		onError: (err) => {
+			console.log(err)
 			toast.error('Failed to delete user');
 		}
 	})

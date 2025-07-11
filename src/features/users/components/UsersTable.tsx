@@ -37,7 +37,7 @@ import z from 'zod'
 import { useState } from 'react'
 import { useDeleteUser } from '../hooks/useDeleteUser'
 
-import type { User } from '../userSchemas'
+import type { UserType } from '../userSchemas'
 import { UsersSchema } from '../userSchemas'
 
 
@@ -49,28 +49,28 @@ interface Props {
 
 const UsersTable = ({ data }: Props) => {
 	const [sorting, setSorting] = useState<SortingState>([])
-	const [editingUser, setEditingUser] = useState<User | null>(null)
-	const [userToDelete, setUserToDelete] = useState<User | null>(null)
+	const [editingUser, setEditingUser] = useState<UserType | null>(null)
+	const [userToDelete, setUserToDelete] = useState<UserType | null>(null)
+	const [addUserOpen, setAddUserOpen] = useState<boolean>(false)
 	const { mutate: deleteUserById } = useDeleteUser(() => {
 		setUserToDelete(null)
 	})
 
 	// handler
-	const handleEditClick = (user: User) => {
+	const handleEditClick = (user: UserType) => {
 		setEditingUser(user)
 	}
 
-	const handleCloseModal = () => {
+	const handleCloseEditingModal = () => {
 		setEditingUser(null)
 	}
 
-	const handleDeleteUserClick = (user: User) => {
+	const handleDeleteUserClick = (user: UserType) => {
 		deleteUserById(user.id)
-		setUserToDelete(null)
 	}
 
 	// Column definition
-	const columns: ColumnDef<User>[] = [
+	const columns: ColumnDef<UserType>[] = [
 		{
 			header: 'Username',
 			accessorKey: 'username'
@@ -91,7 +91,7 @@ const UsersTable = ({ data }: Props) => {
 			id: 'actions',
 			header: '',
 			cell: ({ row }) => (
-				<>
+				<div className='flex justify-end'>
 					<Button
 						className='cursor-pointer bg-blue-300 hover:bg-blue-400 text-white mr-3'
 						onClick={() => handleEditClick(row.original)}
@@ -108,7 +108,7 @@ const UsersTable = ({ data }: Props) => {
 					>
 						Delete
 					</Button>
-				</>
+				</div>
 			),
 		},
 	]
@@ -137,7 +137,7 @@ const UsersTable = ({ data }: Props) => {
 					user={editingUser}
 					onSuccess={() => {
 						console.log("updated")
-						handleCloseModal()
+						handleCloseEditingModal()
 					}}
 				/>
 			</DefaultModal>
@@ -161,18 +161,21 @@ const UsersTable = ({ data }: Props) => {
 						<Button
 							variant={'secondary'}
 							className='cursor-pointer px-4 py-2 bg-blue-300 hover:bg-blue-400 rounded-md text-white'
+							onClick={() => setAddUserOpen(true)}
+							
 						>
 							+ add User
 						</Button>
 					}
+					open={addUserOpen}
+					onOpenChange={() => setAddUserOpen(!addUserOpen)}
 				>
-					<AddUserForm />
+					<AddUserForm onSuccess={() => setAddUserOpen(false)}/>
 				</DefaultModal>
 			</CardHeader>
 
 
 			<CardContent>
-
 				<Table>
 					<TableHeader>
 						{table.getHeaderGroups().map((hg) => (
