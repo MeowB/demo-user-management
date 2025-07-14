@@ -2,10 +2,12 @@ import type {
 	ColumnDef,
 	SortingState,
 } from '@tanstack/react-table'
+import type { PaginationState } from '@tanstack/react-table'
 
 import {
 	flexRender,
 	getCoreRowModel,
+	getPaginationRowModel,
 	getSortedRowModel,
 	useReactTable
 } from '@tanstack/react-table'
@@ -30,15 +32,19 @@ import { Button } from '@/shared/components/ui/button'
 import { ConfirmDeleteModal } from '@/shared/components/modals/ConfirmDeleteModal'
 import { DefaultModal } from '@/shared/components/modals/DefaultModal'
 import AddUserForm from './forms/AddUserForm'
-import EditUserForm from './forms/EditUserForm'
 
 import z from 'zod'
 
 import { useState } from 'react'
 import { useDeleteUser } from '../hooks/useDeleteUser'
+import { useMemo } from 'react'
 
 import type { UserType } from '../userSchemas'
 import { UsersSchema } from '../userSchemas'
+import { UserFilters } from './UserFilters'
+import { PaginationControls } from './PaginationControls'
+import { EditUserModal } from './modals/EditUserModal'
+import { AddUserModal } from './modals/AddUserModal'
 
 
 type Users = z.infer<typeof UsersSchema>
@@ -49,12 +55,32 @@ interface Props {
 
 const UsersTable = ({ data }: Props) => {
 	const [sorting, setSorting] = useState<SortingState>([])
+	const [roleFilter, setRoleFilter] = useState<string | null>(null)
 	const [editingUser, setEditingUser] = useState<UserType | null>(null)
 	const [userToDelete, setUserToDelete] = useState<UserType | null>(null)
 	const [addUserOpen, setAddUserOpen] = useState<boolean>(false)
+	const [searchQuery, setSearchQuery] = useState('')
+	const [pagination, setPagination] = useState<PaginationState>({
+		pageIndex: 0,
+		pageSize: 10
+	})
 	const { mutate: deleteUserById } = useDeleteUser(() => {
 		setUserToDelete(null)
 	})
+
+	const filteredUsers = useMemo(() => {
+		if (!data) return []
+		const query = searchQuery.toLowerCase()
+		return data.filter((user) => {
+			const matchesQuery =
+				user.username.toLowerCase().includes(query) ||
+				user.name.toLowerCase().includes(query) ||
+				user.email.toLowerCase().includes(query)
+
+			const matchesRole = roleFilter ? user.role === roleFilter : true
+			return matchesQuery && matchesRole
+		})
+	}, [data, searchQuery, roleFilter])
 
 	// handler
 	const handleEditClick = (user: UserType) => {
@@ -91,7 +117,7 @@ const UsersTable = ({ data }: Props) => {
 			id: 'actions',
 			header: '',
 			cell: ({ row }) => (
-				<div className='flex justify-end'>
+				<div className='flex'>
 					<Button
 						className='cursor-pointer bg-blue-300 hover:bg-blue-400 text-white mr-3'
 						onClick={() => handleEditClick(row.original)}
@@ -114,35 +140,26 @@ const UsersTable = ({ data }: Props) => {
 	]
 
 	const table = useReactTable({
-		data,
+		data: filteredUsers,
 		columns,
-		state: { sorting },
+		state: {
+			sorting,
+			pagination
+		},
+		getPaginationRowModel: getPaginationRowModel(),
+		onPaginationChange: setPagination,
 		getCoreRowModel: getCoreRowModel(),
 		getSortedRowModel: getSortedRowModel(),
 		onSortingChange: setSorting,
 	})
 
-
 	return (
 		<Card>
-			{/* EDIT MODAL */}
-			<DefaultModal
-				title='Edit User'
-				open={!!editingUser}
-				onOpenChange={(open) => {
-					if (!open) setEditingUser(null)
-				}}
-			>
-				<EditUserForm
-					user={editingUser}
-					onSuccess={() => {
-						console.log("updated")
-						handleCloseEditingModal()
-					}}
-				/>
-			</DefaultModal>
-
-			{/* DELETE MODAL */}
+			<EditUserModal
+				user={editingUser}
+				onClose={handleCloseEditingModal}
+			/>
+			
 			<ConfirmDeleteModal
 				open={!!userToDelete}
 				onOpenChange={() => setUserToDelete(null)}
@@ -152,26 +169,29 @@ const UsersTable = ({ data }: Props) => {
 				itemName={userToDelete?.name}
 			/>
 
+			<AddUserModal 
+				open={addUserOpen}
+				onClose={() => setAddUserOpen(false)}
+			/>
 
-			<CardHeader className='flex justify-between items-center'>
-				<CardTitle>Users</CardTitle>
-				<DefaultModal
-					title='Add User'
-					trigger={
-						<Button
-							variant={'secondary'}
-							className='cursor-pointer px-4 py-2 bg-blue-300 hover:bg-blue-400 rounded-md text-white'
-							onClick={() => setAddUserOpen(true)}
-							
-						>
-							+ add User
-						</Button>
-					}
-					open={addUserOpen}
-					onOpenChange={() => setAddUserOpen(!addUserOpen)}
-				>
-					<AddUserForm onSuccess={() => setAddUserOpen(false)}/>
-				</DefaultModal>
+			<CardHeader>
+				<div className='flex justify-between items-center'>
+					<CardTitle>Users</CardTitle>
+					<Button
+						variant={'secondary'}
+						className='cursor-pointer px-4 py-2 bg-blue-300 hover:bg-blue-400 rounded-md text-white'
+						onClick={() => setAddUserOpen(true)}
+
+					>
+						+ Add User
+					</Button>
+				</div>
+				<UserFilters
+					searchQuery={searchQuery}
+					setSearchQuery={setSearchQuery}
+					roleFilter={roleFilter}
+					setRoleFilter={setRoleFilter}
+				/>
 			</CardHeader>
 
 
@@ -195,17 +215,27 @@ const UsersTable = ({ data }: Props) => {
 						))}
 					</TableHeader>
 					<TableBody>
-						{table.getRowModel().rows.map((row) => (
-							<TableRow key={row.id} className='even:bg-gray-50'>
-								{row.getVisibleCells().map((cell) => (
-									<TableCell key={cell.id} className='p-2'>
-										{flexRender(cell.column.columnDef.cell, cell.getContext())}
+						{filteredUsers.length === 0
+							? (
+								<TableRow>
+									<TableCell colSpan={columns.length} className='text-center py-4 text-muted-foreground'>
+										No users found.
 									</TableCell>
-								))}
-							</TableRow>
-						))}
+								</TableRow>
+							)
+							: table.getPaginationRowModel().rows.map((row) => (
+								<TableRow key={row.id} className='even:bg-gray-50'>
+									{row.getVisibleCells().map((cell) => (
+										<TableCell key={cell.id} className='p-2'>
+											{flexRender(cell.column.columnDef.cell, cell.getContext())}
+										</TableCell>
+									))}
+								</TableRow>
+							))
+						}
 					</TableBody>
 				</Table>
+				<PaginationControls table={table} />
 			</CardContent>
 		</Card>
 	)
