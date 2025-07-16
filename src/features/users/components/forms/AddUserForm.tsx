@@ -40,7 +40,7 @@ const AddUserForm = ({ onSuccess }: { onSuccess: () => void }) => {
 			<div>
 				<Label htmlFor='name' className='pb-2'>Name</Label>
 				<Input id='name' {...register("name")} />
-				{errors.username && <p className='text-sm text-red-500' >{errors.username.message}</p>}
+				{errors.name && <p className='text-sm text-red-500' >{errors.name.message}</p>}
 			</div>
 			<div>
 				<Label htmlFor='username' className='pb-2'>Username</Label>

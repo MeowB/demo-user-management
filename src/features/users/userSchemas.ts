@@ -13,8 +13,8 @@ export const UserSchema = z.object({
 })
 
 export const NewUserFormSchema = z.object({
-	name: z.string().min(1),
-	username: z.string().min(1),
+	name: z.string().min(1, { message: 'Name is required' }),
+	username: z.string().min(1, { message: 'Username is required' }),
 	email: z.string().email(),
 	role: z.enum(['manager', 'admin', 'user'])
 })
